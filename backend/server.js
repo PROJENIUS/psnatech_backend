@@ -39,15 +39,17 @@ app.get('/generate-serial', (req, res) => {
 // Route to receive PDF and send email
 app.post('/send-email', upload.single('file'), async (req, res) => {
   try {
-    console.log('📨 Request received');
-    console.log('📎 File received:', req.file);
+    if (!req.file) {
+      console.error("❌ No file received in request");
+      return res.status(400).send("No file uploaded");
+    }
 
     const transporter = nodemailer.createTransport({
       service: 'Gmail',
       auth: {
         user: 'projenius2025@gmail.com',
-        pass: 'voakqbknlwjmsnwd' // app password
-      }
+        pass: 'voakqbknlwjmsnwd', // Gmail App Password
+      },
     });
 
     const mailOptions = {
@@ -59,18 +61,19 @@ app.post('/send-email', upload.single('file'), async (req, res) => {
         {
           filename: req.body.filename || 'ApplicationForm.pdf',
           content: req.file.buffer,
-        }
-      ]
+        },
+      ],
     };
 
     await transporter.sendMail(mailOptions);
     console.log('✅ Email sent!');
     res.status(200).send('Email sent successfully!');
   } catch (error) {
-    console.error('❌ Error sending email:', error);
-    res.status(500).send('Error sending email');
+    console.error('❌ Error sending email:', error.message);
+    res.status(500).send('Error sending email: ' + error.message);
   }
 });
+
 
 // Start server
 app.listen(5000, () => {
